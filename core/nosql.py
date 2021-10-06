@@ -2,14 +2,14 @@
 
 import os
 from tinydb import TinyDB, Query
+from core.settings import SETTINGS
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
-DATABASE_PATH = 'database'
 
 
 class Table(TinyDB):
     """ This class simplify using of TinyBD
-    /!\ : remember that using 'insert()' return databse_index
+    /!\ remember that using 'insert()' return database_index
     """
 
     def __init__(self, table_name, *args, **kwargs):
@@ -23,7 +23,7 @@ class Table(TinyDB):
             table_name = '{0}.json'.format(table_name)
 
         self._name = table_name
-        table_path = os.path.join(PROJECT_PATH, DATABASE_PATH, self._name)
+        table_path = os.path.join(PROJECT_PATH, SETTINGS.DATABASE_PATH, self._name)
         # Setting not configured arguments
         kwargs['path'] = table_path
         kwargs['sort_keys'] = kwargs['sort_keys'] if 'sort_keys' in kwargs else True
