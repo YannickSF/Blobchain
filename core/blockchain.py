@@ -22,9 +22,9 @@ class Blockchain:
         self._chain.insert(b.__repr__())
         return b
 
-    def __get__(self, *args):
-        """return block by hash"""
-        return 'block'
+    def block(self, *args):
+        b = Query()
+        return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
     def synchronise(self, *args):
         """synchronise blockchain with data"""

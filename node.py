@@ -10,7 +10,10 @@ class BlobNode:
 		self.network = Network(host=host, port=port, blockchain=self.blockchain, id=id)
 
 	def block(self, *args):
-		pass
+		if len(args) > 0:
+			return self.blockchain.block(args[0])
+		else:
+			return self.blockchain.__repr__()
 
 	def synchronise(self):
 		pass
@@ -28,4 +31,5 @@ class BlobNode:
 
 if __name__ == "__main__":
 	n = BlobNode()
+	print(n.block('hash'))
 	n.stop()
