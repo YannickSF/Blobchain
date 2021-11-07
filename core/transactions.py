@@ -4,6 +4,7 @@ import hashlib
 
 class Txion:
     def __init__(self, **kwargs):
+        print(kwargs)
         self.expeditor = kwargs['expeditor']
         self.destinator = kwargs['destinator']
         self.amount = kwargs['amount']

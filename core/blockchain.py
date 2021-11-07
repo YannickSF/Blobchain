@@ -47,14 +47,20 @@ class Blockchain:
         timestamp = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
         nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 else 'empty.nounce'
         tx = Txion(expeditor=expeditor, destinator=to, amount=obj, timestamp=timestamp, nounce=nounce)
-        # todo : check validity
         self._txion.insert(tx.__repr__())
         return tx
 
-    def peers_exchanges(self, *args, **kwargs):
+    def peers_exchanges(self, b_type, item):
         """receiving peers exchanges from network"""
-        # todo : check validity of obj before update on node
-        print('compute - peers_exchanges : ' + str(args[0]))
+        print('compute - peers_exchanges : ' + str(b_type))
+        if b_type == 'block':
+            b = Block(**item)
+            self._chain.insert(b.__repr__())
+        elif b_type == 'txion':
+            tx = Txion(**item)
+            self._txion.insert(tx.__repr__())
+        else:
+            print('unknown item.')
 
     def __repr__(self):
         return {'blockchain': self._chain.all()}

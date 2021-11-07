@@ -1,36 +1,4 @@
 {
     "_default": {
-        "1": {
-            "amount": 10,
-            "destinator": "user2",
-            "expeditor": "user1",
-            "hash": "c202b3c56a14693e36dbdd3753d6935f25b8adc6f2bc7c4e7e098b23f66c374c",
-            "nounce": "empty.nounce",
-            "timestamp": "07 November 2021 20:47:10"
-        },
-        "2": {
-            "amount": 10,
-            "destinator": "user2",
-            "expeditor": "user1",
-            "hash": "f9f4bce1fee3c633fad380738fdc525216b3c95254e4dd4710fe7db4e76df421",
-            "nounce": "c202b3c56a14693e36dbdd3753d6935f25b8adc6f2bc7c4e7e098b23f66c374c",
-            "timestamp": "07 November 2021 20:59:36"
-        },
-        "3": {
-            "amount": 10,
-            "destinator": "user2",
-            "expeditor": "user1",
-            "hash": "5cf13551b7d87cbd6db7279859c55ce3fc72bc0af4a06ace4d212ae65673e8c0",
-            "nounce": "f9f4bce1fee3c633fad380738fdc525216b3c95254e4dd4710fe7db4e76df421",
-            "timestamp": "07 November 2021 21:04:43"
-        },
-        "4": {
-            "amount": 10,
-            "destinator": "user2",
-            "expeditor": "user1",
-            "hash": "02395a8ca4735760a4bced7a4bd2420143ccaae11a85892b56f659763d133141",
-            "nounce": "5cf13551b7d87cbd6db7279859c55ce3fc72bc0af4a06ace4d212ae65673e8c0",
-            "timestamp": "07 November 2021 21:05:07"
-        }
     }
 }

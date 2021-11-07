@@ -15,9 +15,10 @@ class BlobNode(Node):
         else:
             return self._blockchain.__repr__()
 
-    def exchanges(self, exp, to, value):
+    def exchanges(self, exp, to, value, b_type):
         new_txion = self._blockchain.exchanges(exp, to, value)
-        self.send_to_nodes(new_txion.__repr__())
+        payload = {'b_type': b_type, 'item': new_txion.__repr__()}
+        self.send_to_nodes(payload)
 
     # all the methods below are called when things happen in the network.
     # implement your network node behavior to create the required functionality.
@@ -44,7 +45,7 @@ class BlobNode(Node):
         if 'synchronisation' in data.keys():
             self._blockchain.synchronise(blockchain=data['blockchain'])
         else:
-            self._blockchain.peers_exchanges(data)
+            self._blockchain.peers_exchanges(data['b_type'], data['item'])
 
     def node_request_to_stop(self):
         print("node is requested to stop (" + self.id + "): ")
