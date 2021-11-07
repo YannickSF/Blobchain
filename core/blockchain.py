@@ -1,108 +1,69 @@
 
 import datetime
 from core.nosql import Table, Query
-from core.objects import Block, Txion, Telegraph
-
-NETWORK = []
-MAX_COIN = 21000000000
-REWARD = 10
+from core.blocks import Block
+from core.transactions import Txion
 
 
 class Blockchain:
     def __init__(self):
-        self._storage = Table('blockchain.json')
-        self._chain_infos = {'id': 'index',
-                             'block_index': 0,
-                             'txion_index': 0,
-                             'telegraph_index': 0}
-        self._cache_exchanges = []
+        self._chain = Table('blockchain')
+        self._txion = Table('exchanges')
 
-    def _save_chain_infos(self):
-        query = Query()
-        self._storage.upsert(self._chain_infos, query.id == 'index')
+    def _create_block(self):
+        """create a new block"""
+        index = len(self._chain.all())
+        data = self._txion.all()
+        timestamp = datetime.datetime.now().strftime("%d-%m-%y")
+        last_hash = self._chain.all()[index - 1]['hash'] if not None else ''
 
-    def new_block(self, **kwargs):
-        query = Query()
-        index = len(self._storage.all())
-        last_block_hash = self._storage.search(query.id == index - 1)[0]['hash']
+        b = Block(index=index, data=data, timestamp=timestamp, last_hash=last_hash)
+        # todo : check validity
+        self._chain.insert(b.__repr__())
+        return b
 
-        current_block = Block(index=index,
-                              data=kwargs['data'],
-                              timestamp=kwargs['timestamp'],
-                              last_hash=last_block_hash)
-        current_block.data = self._cache_exchanges
-        self._storage.insert(current_block.__repr__())
+    def block(self, *args):
+        b = Query()
+        return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
-        self._chain_infos['block_index'] = index
-        self._save_chain_infos()
-        self._cache_exchanges.clear()
-
-        self.relay_to(NETWORK, current_block)
-
-    def get_block(self, **kwargs):
-        query = Query()
-        if 'index' in kwargs.keys():
-            return self._storage.search(query.index == kwargs['index'])[0]
-        elif 'hash' in kwargs.keys():
-            return self._storage.search(query.index == kwargs['hash'])[0]
-        else:
-            return None
-
-    """ Envoie le nouveau block au réseau """
-    @staticmethod
-    def relay_to(cible, data):
-
-        def send_to_node(target, value):
-            # TODO : Envoie via le réseau
-            pass
-
-        if cible is not NETWORK:
-            send_to_node(cible, data)
-        else:
-            for n in NETWORK:
-                send_to_node(n, data)
-
-    def relay_from(self, data):
-        self._storage.insert(data)
-        # TODO : Si c'est un block synchroniser la chaine | Mettre à jour les données de la chaine
-
-    """ Détermine la création des blocks """
-    def block_protocol(self):
+    def forge(self):
+        """ creating new block by consensus"""
         pass
 
-    """ Synchronise la chaine avec le réseau """
-    def synchronisation(self):
+    def synchronise(self, **blockchain):
+        """synchronise node with network"""
+        print('compute - synchronisation : ' + str(blockchain))
         pass
 
-    """ Envoi de coin ou de telegraph sur le réseau """
-    def transfer(self, kwargs):
-        if 'amount' in kwargs:
-            current_txion = Txion(index=self._chain_infos['txion_index'],
-                                  expeditor=kwargs['expeditor'],
-                                  destinator=kwargs['destinator'],
-                                  amount=int(kwargs['amount']),
-                                  timestamp=datetime.datetime.now().strftime('%a, %d %b %Y %H:%M:%S'))
+    def exchanges(self, *args, **kwargs):
+        """create exchange from the node"""
+        expeditor = args[0] if args[0] is not None else None
+        to = args[1] if args[1] is not None else None
+        obj = args[2] if args[2] is not None else None
 
-            self._cache_exchanges.append(current_txion)
-            self._storage.insert(current_txion.__repr__())
-            self._chain_infos['txion_index'] += 1
+        if not expeditor or not to or not obj:
+            return 'Error execute exchange.'
 
-        if 'message' in kwargs.keys():
-            current_tlgrph = Telegraph(
-                                  expeditor=kwargs['expeditor'],
-                                  destinator=kwargs['destinator'],
-                                  message=kwargs['message'],
-                                  timestamp=datetime.datetime.now().strftime('%a, %d %b %Y %H:%M:%S'))
+        timestamp = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
+        nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 else 'empty.nounce'
+        tx = Txion(expeditor=expeditor, destinator=to, amount=obj, timestamp=timestamp, nounce=nounce)
+        self._txion.insert(tx.__repr__())
+        return tx
 
-            self._cache_exchanges.append(current_tlgrph)
-            self._chain_infos['telegraph_index'] += 1
-            self._storage.insert(current_tlgrph.__repr__())
-
-        self._save_chain_infos()
-        return True
+    def peers_exchanges(self, b_type, item):
+        """receiving peers exchanges from network"""
+        print('compute - peers_exchanges : ' + str(b_type))
+        if b_type == 'block':
+            b = Block(**item)
+            self._chain.insert(b.__repr__())
+        elif b_type == 'txion':
+            tx = Txion(**item)
+            self._txion.insert(tx.__repr__())
+        else:
+            print('unknown item.')
 
     def __repr__(self):
-        return {'blockchain': self._storage.all()}
+        return {'blockchain': self._chain.all()}
 
     def __str__(self):
         return self.__repr__().__str__()
