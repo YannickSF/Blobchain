@@ -1,35 +1,50 @@
 
-from core.settings import SETTINGS
-from core.network import Network
+from p2pnetwork.node import Node
 from core.blockchain import Blockchain
 
 
-class BlobNode:
-	def __init__(self, host=SETTINGS.HOST, port=SETTINGS.PORT, id=0):
-		self.blockchain = Blockchain()
-		self.network = Network(host=host, port=port, blockchain=self.blockchain, id=id)
+class BlobNode(Node):
+    def __init__(self, host, port, callback=None, max_connections=0):
+        super(BlobNode, self).__init__(host, port, None, callback, max_connections)
+        self._blockchain = Blockchain()
+        print("Node {} - port {}: Started".format(self.id, port))
 
-	def block(self, *args):
-		if len(args) > 0:
-			return self.blockchain.block(args[0])
-		else:
-			return self.blockchain.__repr__()
+    def blocks(self, *args):
+        if len(args) > 0:
+            return self._blockchain.block(args[0])
+        else:
+            return self._blockchain.__repr__()
 
-	def synchronise(self):
-		pass
+    def exchanges(self, exp, to, value):
+        new_txion = self._blockchain.exchanges(exp, to, value)
+        self.send_to_nodes(new_txion.__repr__())
 
-	def exchanges(self, exp, dest, value):
-		new_txion = self.blockchain.exchanges(exp, dest, value)
-		self.network.send_to_nodes(new_txion.__repr__())
+    # all the methods below are called when things happen in the network.
+    # implement your network node behavior to create the required functionality.
 
-	def forge(self):
-		pass
+    def outbound_node_connected(self, node):
+        # this connect to other
+        print("outbound_node_connected (" + self.id + "): " + node.id)
 
-	def stop(self):
-		self.network.stop()
+    def inbound_node_connected(self, node):
+        # other connect to this
+        payload = self.blocks()
+        payload['synchronisation'] = True
+        self.send_to_node(node, payload)
+        print("inbound_node_connected: (" + self.id + "): " + node.id)
 
+    def outbound_node_disconnected(self, node):
+        print("outbound_node_disconnected: (" + self.id + "): " + node.id)
 
-if __name__ == "__main__":
-	n = BlobNode()
-	print(n.block('hash'))
-	n.stop()
+    def inbound_node_disconnected(self, node):
+        print("inbound_node_disconnected: (" + self.id + "): " + node.id)
+
+    def node_message(self, node, data):
+        print("node_message (" + self.id + ") from " + node.id + ": " + str(data))
+        if 'synchronisation' in data.keys():
+            self._blockchain.synchronise(blockchain=data['blockchain'])
+        else:
+            self._blockchain.peers_exchanges(data)
+
+    def node_request_to_stop(self):
+        print("node is requested to stop (" + self.id + "): ")

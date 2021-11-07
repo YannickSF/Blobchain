@@ -7,8 +7,8 @@ from core.transactions import Txion
 
 class Blockchain:
     def __init__(self):
-        self._chain = Table('blockchain.json')
-        self._txion = Table('transaction')
+        self._chain = Table('blockchain')
+        self._txion = Table('exchanges')
 
     def _create_block(self):
         """create a new block"""
@@ -26,8 +26,13 @@ class Blockchain:
         b = Query()
         return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
-    def synchronise(self, *args):
-        """synchronise blockchain with data"""
+    def forge(self):
+        """ creating new block by consensus"""
+        pass
+
+    def synchronise(self, **blockchain):
+        """synchronise node with network"""
+        print('compute - synchronisation : ' + str(blockchain))
         pass
 
     def exchanges(self, *args, **kwargs):
@@ -49,16 +54,7 @@ class Blockchain:
     def peers_exchanges(self, *args, **kwargs):
         """receiving peers exchanges from network"""
         # todo : check validity of obj before update on node
-        print('compute - peers_exhchanges : ' + str(args[0]))
-
-    def consensus(self):
-        """how block mined"""
-        pass
-
-    def forge(self):
-        """mine new block """
-        # create new block after PoConsensus
-        pass
+        print('compute - peers_exchanges : ' + str(args[0]))
 
     def __repr__(self):
         return {'blockchain': self._chain.all()}
