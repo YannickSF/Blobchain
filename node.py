@@ -25,7 +25,9 @@ class BlobNode(Node):
         self.send_to_nodes(payload)
 
     def forge(self):
-        self._blockchain.forge()
+        new_block = self._blockchain.forge()
+        payload = {'b_type': 'block', 'item': new_block.__repr__()}
+        self.send_to_nodes(data=payload)
 
     # all the methods below are called when things happen in the network.
     # implement your network node behavior to create the required functionality.

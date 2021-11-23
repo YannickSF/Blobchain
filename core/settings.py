@@ -5,7 +5,7 @@ class _Settings:
     COINS = 1000000000
     REWARD = 100
     DATABASE_PATH = 'network'
-    NETWORK = 'test'  # 'main', 'test' -net
+    NETWORK = 'test'  # 'main', 'test'
     # NETWORK
     HOST = '127.0.0.1'
     PORT = 7000

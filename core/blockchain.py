@@ -11,7 +11,7 @@ class Blockchain:
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
-        if len(self._chain.all()) == 0:
+        if len(self._chain.all()) < 1:
             self._create_block()
 
     def _create_block(self):
@@ -19,11 +19,12 @@ class Blockchain:
         index = len(self._chain.all())
         data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
-        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 1 else '[Genesis-Block-0111]'
+        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
 
         b = Block(index=index, data=data, timestamp=timestamp, last_hash=last_hash)
         # todo : check validity
         self._chain.insert(b.__repr__())
+        self._txion.truncate()
         return b
 
     def block(self, *args):
@@ -32,7 +33,7 @@ class Blockchain:
 
     def forge(self):
         """ creating new block by consensus"""
-        pass
+        return self._create_block()
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
