@@ -3,6 +3,7 @@ import datetime
 from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
+from core.settings import SETTINGS
 
 
 class Blockchain:
@@ -10,12 +11,15 @@ class Blockchain:
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
+        if len(self._chain.all()) == 0:
+            self._create_block()
+
     def _create_block(self):
         """create a new block"""
         index = len(self._chain.all())
-        data = self._txion.all()
-        timestamp = datetime.datetime.now().strftime("%d-%m-%y")
-        last_hash = self._chain.all()[index - 1]['hash'] if not None else ''
+        data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
+        timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
+        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 1 else '[Genesis-Block-0111]'
 
         b = Block(index=index, data=data, timestamp=timestamp, last_hash=last_hash)
         # todo : check validity
@@ -30,10 +34,62 @@ class Blockchain:
         """ creating new block by consensus"""
         pass
 
-    def synchronise(self, **blockchain):
+    def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
         print('compute - synchronisation : ' + str(blockchain))
-        pass
+        resolve = False
+        resolve_chain = []
+        longer_is_self = True
+
+        def compare_blocks(blockchain_one, blockchain_two):
+            blockchain_one = blockchain_one.sort()
+            blockchain_two = blockchain_two.sort()
+            # todo : test with difference : if ain't work : use hash by hash method
+            return blockchain_one - blockchain_two, blockchain_one \
+                if len(blockchain_one) >= len(blockchain_two) else blockchain_two
+
+        def find_block(key, value, chain):
+            for e in chain:
+                if e[key] == value:
+                    return True
+            return False
+
+        if args[0] == 'compute':
+            block_difference, longer_chain = compare_blocks(self._chain.all(), blockchain['data'])
+            if longer_chain == self._chain.all():
+                longer_is_self = True
+
+            if len(block_difference) > 0:
+                # check if block_difference in longer_chain : if not -> create resolve chain
+                for block in block_difference:
+                    if not find_block('hash', block['hash'], longer_chain):
+                        resolve_chain.append(block)
+
+                if len(resolve_chain) > 0:
+                    resolve_chain += longer_chain
+                    resolve_chain.sort(key=lambda x: x['timestamp'])
+
+            if len(resolve_chain) > 0:
+                # todo : temporiser resolve_chain -> forge():#next_block
+                self._chain.truncate()
+                for it in resolve_chain:
+                    self._chain.insert(it)
+
+                resolve = False
+
+            if longer_is_self:
+                resolve_chain = self._chain.all()
+
+        elif args[0] == 'resolve':
+            resolve = True
+            resolve_chain = blockchain
+
+            # todo : temporiser resolve_chain -> forge():#next_block
+            self._chain.truncate()
+            for it in resolve_chain:
+                self._chain.insert(it)
+
+        return resolve, resolve_chain
 
     def exchanges(self, *args, **kwargs):
         """create exchange from the node"""
@@ -59,6 +115,9 @@ class Blockchain:
         elif b_type == 'txion':
             tx = Txion(**item)
             self._txion.insert(tx.__repr__())
+
+        elif b_type is None:
+            print(item)
         else:
             print('unknown item.')
 

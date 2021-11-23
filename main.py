@@ -16,7 +16,7 @@ def network():
     node_2.connect_with_node('127.0.0.1', 8001)
     time.sleep(5)
 
-    node_1.exchanges('user1', 'user2', 10, 'txion')
+    node_1.exchanges('txion', 'user1', 'user2', 10)
     time.sleep(10)
 
     node_1.stop()

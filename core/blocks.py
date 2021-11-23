@@ -6,7 +6,7 @@ class Block:
     def __init__(self, **kwargs):
         self.index = kwargs['index']
         self.data = kwargs['data']
-        self.timestamp = ['timestamp']
+        self.timestamp = kwargs['timestamp']
         self.last_hash = kwargs['last_hash']
 
         if 'hash' in kwargs.keys():
