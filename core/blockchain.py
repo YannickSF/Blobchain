@@ -1,5 +1,6 @@
 
 import datetime
+import hashlib
 from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
@@ -12,28 +13,67 @@ class Blockchain:
         self._txion = Table('exchanges')
 
         if len(self._chain.all()) < 1:
-            self._create_block()
+            self._create_block(0)
 
-    def _create_block(self):
+    def _create_block(self, proof):
         """create a new block"""
         index = len(self._chain.all())
         data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
 
-        b = Block(index=index, data=data, timestamp=timestamp, last_hash=last_hash)
+        b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash)
         # todo : check validity
+
         self._chain.insert(b.__repr__())
         self._txion.truncate()
         return b
+
+    def last_block(self):
+        return self._chain.all()[len(self._chain.all()) - 1]
 
     def block(self, *args):
         b = Query()
         return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
     def forge(self):
-        """ creating new block by consensus"""
-        return self._create_block()
+        """ creating new block by forging()"""
+
+        def valid_proof(last_proof, guessing_value, last_hash):
+            """
+            Validates the Proof
+            :param last_proof: <int> Previous Proof
+            :param guessing_value: <int> Current Proof
+            :param last_hash: <str> The hash of the Previous Block
+            :return: <bool> True if correct, False if not.
+            """
+
+            guess = f'{last_proof}{guessing_value}{last_hash}'.encode()
+            guess_hash = hashlib.sha256(guess).hexdigest()
+            return guess_hash[:4] == "0000"
+
+        def proof_of_work(last_block):
+            """
+            Simple Proof of Work Algorithm:
+             - Find a number p' such that hash(pp') contains leading 4 zeroes
+             - Where p is the previous proof, and p' is the new proof
+
+            :param last_block: <dict> last Block
+            :return: <int>
+            """
+
+            last_proof = last_block['proof']
+            last_hash = last_block['hash']
+
+            guessing_proof = 0
+            while valid_proof(last_proof, guessing_proof, last_hash) is False:
+                guessing_proof += 1
+
+            return guessing_proof
+
+        proof = proof_of_work(self.last_block())
+        if proof is not None:
+            return self._create_block(proof)
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
