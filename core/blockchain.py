@@ -85,7 +85,7 @@ class Blockchain:
         def compare_blocks(blockchain_one, blockchain_two):
             blockchain_one = blockchain_one.sort()
             blockchain_two = blockchain_two.sort()
-            # todo : test with difference : if ain't work : use hash by hash method
+            # todo : tests with difference : if ain't work : use hash by hash method
             return blockchain_one - blockchain_two, blockchain_one \
                 if len(blockchain_one) >= len(blockchain_two) else blockchain_two
 

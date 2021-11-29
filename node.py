@@ -1,4 +1,5 @@
 
+from core.settings import SETTINGS
 from p2pnetwork.node import Node
 from core.blockchain import Blockchain
 
@@ -23,11 +24,13 @@ class BlobNode(Node):
             payload['item'] = new_txion.__repr__()
 
         self.send_to_nodes(payload)
+        return new_txion
 
     def forge(self):
         new_block = self._blockchain.forge()
         payload = {'b_type': 'block', 'item': new_block.__repr__()}
         self.send_to_nodes(data=payload)
+        return new_block
 
     # all the methods below are called when things happen in the network.
     # implement your network node behavior to create the required functionality.
@@ -63,3 +66,18 @@ class BlobNode(Node):
 
     def node_request_to_stop(self):
         print("node is requested to stop (" + self.id + "): ")
+
+
+if __name__ == '__main__':
+    n = BlobNode(SETTINGS.HOST, SETTINGS.PORT)
+    n.start()
+
+    stop = False
+    while not stop:
+        outbound = input('Press \'0\' to stop. \n')
+        if int(outbound) == 0:
+            stop = True
+
+    if stop:
+        n.stop()
+

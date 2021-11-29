@@ -8,7 +8,7 @@ class _Settings:
     NETWORK = 'test'  # 'main', 'test'
     # NETWORK
     HOST = '127.0.0.1'
-    PORT = 7000
+    PORT = 7701
 
 
 SETTINGS = _Settings()
