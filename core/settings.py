@@ -7,7 +7,7 @@ class _Settings:
     DATABASE_PATH = 'network'
     NETWORK = 'test'  # 'main', 'test'
     # NETWORK
-    HOST = '127.0.0.1'
+    HOST = '0.0.0.0'
     PORT = 7701
 
 

@@ -1,3 +1,12 @@
 {
-    "_default": {}
+    "_default": {
+        "1": {
+            "amount": "5",
+            "destinator": "you",
+            "expeditor": "me",
+            "hash": "6ad72cafb9df0c464db775613f9fbb039e541a3d16a82e3be5a40be738b1eddd",
+            "nounce": "empty.nounce",
+            "timestamp": "29 November 2021 22:52:11"
+        }
+    }
 }
