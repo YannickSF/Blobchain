@@ -18,13 +18,15 @@ class BlobNode(Node):
 
     def exchanges(self, b_type, exp, to, value):
         payload = {'b_type': b_type}
+        ex_callback = None
 
         if b_type == 'txion':
             new_txion = self._blockchain.exchanges(exp, to, value)
             payload['item'] = new_txion.__repr__()
+            ex_callback = new_txion
 
         self.send_to_nodes(payload)
-        return new_txion
+        return ex_callback
 
     def forge(self):
         new_block = self._blockchain.forge()

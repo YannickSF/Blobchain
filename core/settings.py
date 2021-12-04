@@ -6,6 +6,7 @@ class _Settings:
     REWARD = 100
     DATABASE_PATH = 'network'
     NETWORK = 'test'  # 'main', 'test'
+
     # NETWORK
     HOST = '0.0.0.0'
     PORT = 7701
