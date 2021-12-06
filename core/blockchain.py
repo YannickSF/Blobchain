@@ -1,6 +1,7 @@
 
 import datetime
 import hashlib
+import random
 from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
@@ -12,31 +13,52 @@ class Blockchain:
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
-        if len(self._chain.all()) < 1:
-            self._create_block(0)
+        self._max_coin = SETTINGS.COINS
+        self._current_circulated_coins = 0
 
-    def _create_block(self, proof):
+        if len(self._chain.all()) < 1:
+            self._create_block(0, None)
+        self._circulation()
+
+    def _circulation(self):
+        blocks = self._chain.all()
+        for b in blocks:
+            if type(b['data']) == list:
+                for tx in b['data']:
+                    if tx['from'] == 'network':
+                        self._current_circulated_coins += tx['amount']
+
+    def _create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
         data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
+        forge_by = miner if len(self._chain.all()) > 0 else 'BLOB'
 
-        b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash)
-        # todo : check validity
+        # todo : check data size before creating block
+        b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
 
         self._chain.insert(b.__repr__())
         self._txion.truncate()
         return b
 
     def last_block(self):
+        """ return last_block of the chain """
         return self._chain.all()[len(self._chain.all()) - 1]
 
     def block(self, *args):
+        """ returning block by hash"""
         b = Query()
         return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
-    def forge(self):
+    def _reward(self, address):
+        """ calculate and distribute rewards after forging block """
+        guess_rewards = random.randint(1, 10)
+        self.exchanges('network', address, guess_rewards)
+        self._current_circulated_coins += guess_rewards
+
+    def forge(self, miner):
         """ creating new block by forging()"""
 
         def valid_proof(last_proof, guessing_value, last_hash):
@@ -73,7 +95,8 @@ class Blockchain:
 
         proof = proof_of_work(self.last_block())
         if proof is not None:
-            return self._create_block(proof)
+            # todo : distribute rewards
+            return self._create_block(proof, miner)
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
@@ -111,12 +134,12 @@ class Blockchain:
                     resolve_chain.sort(key=lambda x: x['timestamp'])
 
             if len(resolve_chain) > 0:
+                resolve = False
+
                 # todo : temporiser resolve_chain -> forge():#next_block
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
-
-                resolve = False
 
             if longer_is_self:
                 resolve_chain = self._chain.all()
@@ -130,6 +153,7 @@ class Blockchain:
             for it in resolve_chain:
                 self._chain.insert(it)
 
+        self._circulation()
         return resolve, resolve_chain
 
     def exchanges(self, *args, **kwargs):
@@ -152,6 +176,7 @@ class Blockchain:
         print('compute - peers_exchanges : ' + str(b_type))
         if b_type == 'block':
             b = Block(**item)
+            self._txion.truncate()
             self._chain.insert(b.__repr__())
         elif b_type == 'txion':
             tx = Txion(**item)

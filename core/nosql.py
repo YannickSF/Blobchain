@@ -23,7 +23,7 @@ class Table(TinyDB):
             table_name = '{0}.json'.format(table_name)
 
         self._name = table_name
-        table_path = os.path.join(PROJECT_PATH, SETTINGS.DATABASE_PATH, SETTINGS.NETWORK, self._name)
+        table_path = os.path.join(PROJECT_PATH, SETTINGS.NETWORK_PATH, SETTINGS.NETWORK, self._name)
         # Setting not configured arguments
         kwargs['path'] = table_path
         kwargs['sort_keys'] = kwargs['sort_keys'] if 'sort_keys' in kwargs else True

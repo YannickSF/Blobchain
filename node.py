@@ -29,7 +29,8 @@ class BlobNode(Node):
         return ex_callback
 
     def forge(self):
-        new_block = self._blockchain.forge()
+        # get wallet.address_pub
+        new_block = self._blockchain.forge(self.id)
         payload = {'b_type': 'block', 'item': new_block.__repr__()}
         self.send_to_nodes(data=payload)
         return new_block
