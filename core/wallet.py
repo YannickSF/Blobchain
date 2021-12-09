@@ -1,11 +1,65 @@
 
+import random
+import hashlib
+from settings import SETTINGS
+
+WORDS_BANK = ['Composé', 'Cactus', 'Madrid', 'Câbles', 'Câblage', 'Pause', 'Ronflement', 'Carburant', 'Décoration',
+              'Chômage', 'Laitue', 'Infraction', 'Paille', 'Kiosque', 'Tortue', 'Invisible', 'Drôle', 'Quartier',
+              'Archive', 'Électricité', 'Canard', 'Tension', 'Conjoint', 'Falaise', 'Sauce']
+
+
+def get_secret_phrases():
+    return ' '.join([random.choice(WORDS_BANK) for i in range(12)])
+
 
 class Wallet:
     def __init__(self):
-        pass
+        self._secret_phrase = None
+        self._private_key = None
+        self.public_key = None
+
+    def create(self, password):
+        cuter_private = hashlib.sha256()
+        self._secret_phrase = get_secret_phrases()
+        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
+        cuter_private.update(bytes('{}'.format(self._secret_phrase).encode()))
+        cuter_private.update(bytes('{}'.format(password).encode()))
+        cuter_private.update(bytes('{}'.format(SETTINGS.ADDRESS).encode()))
+        self._private_key = cuter_private.hexdigest()
+
+        cuter_public = hashlib.sha256()
+        cuter_public.update(bytes('{}'.format(self._secret_phrase).encode()))
+        cuter_public.update(bytes('{}'.format(password).encode()))
+        self.public_key = cuter_public.hexdigest()
+
+    def open(self, private_key, password, secret_phrase):
+        cuter_private = hashlib.sha256()
+        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
+        cuter_private.update(bytes('{}'.format(secret_phrase).encode()))
+        cuter_private.update(bytes('{}'.format(password).encode()))
+        cuter_private.update(bytes('{}'.format(SETTINGS.ADDRESS).encode()))
+
+        guessing_private = cuter_private.hexdigest()
+        if private_key == guessing_private:
+            self._secret_phrase = secret_phrase
+            self._private_key = guessing_private
+
+            cuter_public = hashlib.sha256()
+            cuter_public.update(bytes('{}'.format(secret_phrase).encode()))
+            cuter_public.update(bytes('{}'.format(password).encode()))
+            self.public_key = cuter_public.hexdigest()
 
     def __repr__(self):
-        return {}
+        return {
+            'secret_phrase': self._secret_phrase,
+            'private_key': self._private_key,
+            'public_key': self.public_key
+        }
 
     def __str__(self):
         return self.__repr__().__str__()
+
+
+if __name__ == '__main__':
+    pass
+
