@@ -17,7 +17,7 @@ class Blockchain:
         self._current_circulated_coins = 0
 
         if len(self._chain.all()) < 1:
-            self._create_block(0, None)
+            self._create_block(None, None)
         self._circulation()
 
     def _circulation(self):
@@ -25,16 +25,19 @@ class Blockchain:
         for b in blocks:
             if type(b['data']) == list:
                 for tx in b['data']:
-                    if tx['from'] == 'network':
+                    if tx['from'] == SETTINGS.ADDRESS:
                         self._current_circulated_coins += tx['amount']
 
     def _create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
-        data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
+        data = self._txion.all() if index > 0 else {'describe': 'initial axiom',
+                                                    'coins': SETTINGS.COINS,
+                                                    'MARKUP': SETTINGS.MARKUP,
+                                                    'network_address': SETTINGS.ADDRESS}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
-        forge_by = miner if len(self._chain.all()) > 0 else 'BLOB'
+        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.ADDRESS
 
         # todo : check data size before creating block
         b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
@@ -55,7 +58,7 @@ class Blockchain:
     def _reward(self, address):
         """ calculate and distribute rewards after forging block """
         guess_rewards = random.randint(1, 10)
-        self.exchanges('network', address, guess_rewards)
+        self.exchanges(SETTINGS.ADDRESS, address, guess_rewards)
         self._current_circulated_coins += guess_rewards
 
     def forge(self, miner):

@@ -61,5 +61,7 @@ class Wallet:
 
 
 if __name__ == '__main__':
-    pass
+    w = Wallet()
+    w.create(input('Enter password : \n'))
+    print((w.__str__()))
 

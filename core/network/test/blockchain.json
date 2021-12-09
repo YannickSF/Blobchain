@@ -1,3 +1,18 @@
 {
-    "_default": {}
+    "_default": {
+        "1": {
+            "data": {
+                "MARKUP": "Blobchain_Network",
+                "coins": 1000000000,
+                "describe": "initial axiom",
+                "network_address": "319838453e0be92c89f3cf3c26849418bae38a36d6f46942e908b49216affaf6"
+            },
+            "forge_by": "319838453e0be92c89f3cf3c26849418bae38a36d6f46942e908b49216affaf6",
+            "hash": "1605eb13b3d8805008f75535b20dccbb37f56f0c9c942e9353f24b0c65ca1820",
+            "index": 0,
+            "last_hash": "[Genesis-Block-0111]",
+            "proof": null,
+            "timestamp": " 09/12/2021_21:19:44"
+        }
+    }
 }
