@@ -1,13 +1,13 @@
 
 from core.settings import SETTINGS
 from p2pnetwork.node import Node
-from core.blockchain import Blockchain
+from core.blockchain import Blobchain
 
 
 class BlobNode(Node):
     def __init__(self, host, port, callback=None, max_connections=0):
         super(BlobNode, self).__init__(host, port, None, callback, max_connections)
-        self._blockchain = Blockchain()
+        self._blockchain = Blobchain()
         print("Node {} - port {}: Started".format(self.id, port))
 
     def blocks(self, *args):

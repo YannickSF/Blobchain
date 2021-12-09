@@ -8,7 +8,7 @@ from core.transactions import Txion
 from core.settings import SETTINGS
 
 
-class Blockchain:
+class Blobchain:
     def __init__(self):
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
