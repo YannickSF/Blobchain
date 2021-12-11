@@ -29,7 +29,7 @@ class Blobchain:
         for b in blocks:
             if type(b['data']) == list:
                 for tx in b['data']:
-                    if tx['from'] == SETTINGS.ADDRESS:
+                    if tx['expeditor'] == SETTINGS.ADDRESS:
                         self._current_circulated_coins += tx['amount']
 
     def create_block(self, proof, miner):
