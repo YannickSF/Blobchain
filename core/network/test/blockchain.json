@@ -1,14 +1,3 @@
 {
-    "_default": {
-        "1": {
-            "data": {
-                "coins": 1000000000,
-                "describe": "initial axiom"
-            },
-            "hash": "82afe32125e32a24291b51f9150a078e7d665eff6518276dc2ffa87570c74504",
-            "index": 0,
-            "last_hash": "[Genesis-Block-0111]",
-            "timestamp": " 23/11/2021_12:02:30"
-        }
-    }
+    "_default": {}
 }

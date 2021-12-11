@@ -1,39 +1,109 @@
 
 import datetime
+import hashlib
+import random
 from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
 from core.settings import SETTINGS
 
 
-class Blockchain:
+class Blobchain:
     def __init__(self):
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
-        if len(self._chain.all()) < 1:
-            self._create_block()
+        self._max_coin = SETTINGS.COINS
+        self._current_circulated_coins = 0
 
-    def _create_block(self):
+        if len(self._chain.all()) < 1:
+            self.create_block(None, None)
+        self._circulation()
+
+    @property
+    def current_circulated_coins(self):
+        return self._current_circulated_coins
+
+    def _circulation(self):
+        blocks = self._chain.all()
+        for b in blocks:
+            if type(b['data']) == list:
+                for tx in b['data']:
+                    if tx['from'] == SETTINGS.ADDRESS:
+                        self._current_circulated_coins += tx['amount']
+
+    def create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
-        data = self._txion.all() if index > 0 else {'describe': 'initial axiom', 'coins': SETTINGS.COINS}
+        data = self._txion.all() if index > 0 else {'describe': 'initial axiom',
+                                                    'coins': SETTINGS.COINS,
+                                                    'MARKUP': SETTINGS.MARKUP,
+                                                    'network_address': SETTINGS.ADDRESS}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
+        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.ADDRESS
 
-        b = Block(index=index, data=data, timestamp=timestamp, last_hash=last_hash)
-        # todo : check validity
+        # todo : check data size before creating block
+        b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
+
         self._chain.insert(b.__repr__())
         self._txion.truncate()
         return b
 
+    def last_block(self):
+        """ return last_block of the chain """
+        return self._chain.all()[len(self._chain.all()) - 1]
+
     def block(self, *args):
+        """ returning block by hash"""
         b = Query()
         return self._chain.search(b.hash == args[0])[0] if len(self._chain.search(b.hash == args[0])) > 0 else 'None'
 
-    def forge(self):
-        """ creating new block by consensus"""
-        return self._create_block()
+    def _reward(self, address):
+        """ calculate and distribute rewards after forging block """
+        guess_rewards = random.randint(1, 10)
+        self.exchanges(SETTINGS.ADDRESS, address, guess_rewards)
+        self._current_circulated_coins += guess_rewards
+
+    def forge(self, miner):
+        """ creating new block by forging()"""
+
+        def valid_proof(last_proof, guessing_value, last_hash):
+            """
+            Validates the Proof
+            :param last_proof: <int> Previous Proof
+            :param guessing_value: <int> Current Proof
+            :param last_hash: <str> The hash of the Previous Block
+            :return: <bool> True if correct, False if not.
+            """
+
+            guess = f'{last_proof}{guessing_value}{last_hash}'.encode()
+            guess_hash = hashlib.sha256(guess).hexdigest()
+            return guess_hash[:4] == "0000"
+
+        def proof_of_work(last_block):
+            """
+            Simple Proof of Work Algorithm:
+             - Find a number p' such that hash(pp') contains leading 4 zeroes
+             - Where p is the previous proof, and p' is the new proof
+
+            :param last_block: <dict> last Block
+            :return: <int>
+            """
+
+            last_proof = last_block['proof']
+            last_hash = last_block['hash']
+
+            guessing_proof = 0
+            while valid_proof(last_proof, guessing_proof, last_hash) is False:
+                guessing_proof += 1
+
+            return guessing_proof
+
+        proof = proof_of_work(self.last_block())
+        if proof is not None:
+            # todo : distribute rewards
+            return self.create_block(proof, miner)
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
@@ -45,7 +115,8 @@ class Blockchain:
         def compare_blocks(blockchain_one, blockchain_two):
             blockchain_one = blockchain_one.sort()
             blockchain_two = blockchain_two.sort()
-            # todo : test with difference : if ain't work : use hash by hash method
+            
+            # todo : tests with difference : if ain't work : use hash by hash method
             return blockchain_one - blockchain_two, blockchain_one \
                 if len(blockchain_one) >= len(blockchain_two) else blockchain_two
 
@@ -71,13 +142,14 @@ class Blockchain:
                     resolve_chain.sort(key=lambda x: x['timestamp'])
 
             if len(resolve_chain) > 0:
+                resolve = False
                 # todo : temporiser resolve_chain -> forge():#next_block
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
-
+                    
                 resolve = False
-
+                
             if longer_is_self:
                 resolve_chain = self._chain.all()
 
@@ -90,6 +162,7 @@ class Blockchain:
             for it in resolve_chain:
                 self._chain.insert(it)
 
+        self._circulation()
         return resolve, resolve_chain
 
     def exchanges(self, *args, **kwargs):
@@ -112,6 +185,7 @@ class Blockchain:
         print('compute - peers_exchanges : ' + str(b_type))
         if b_type == 'block':
             b = Block(**item)
+            self._txion.truncate()
             self._chain.insert(b.__repr__())
         elif b_type == 'txion':
             tx = Txion(**item)

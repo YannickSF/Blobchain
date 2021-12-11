@@ -1,12 +1,13 @@
 
+from core.settings import SETTINGS
 from p2pnetwork.node import Node
-from core.blockchain import Blockchain
+from core.blockchain import Blobchain
 
 
 class BlobNode(Node):
     def __init__(self, host, port, callback=None, max_connections=0):
         super(BlobNode, self).__init__(host, port, None, callback, max_connections)
-        self._blockchain = Blockchain()
+        self._blockchain = Blobchain()
         print("Node {} - port {}: Started".format(self.id, port))
 
     def blocks(self, *args):
@@ -17,17 +18,22 @@ class BlobNode(Node):
 
     def exchanges(self, b_type, exp, to, value):
         payload = {'b_type': b_type}
-
+        ex_callback = None
+  
         if b_type == 'txion':
             new_txion = self._blockchain.exchanges(exp, to, value)
             payload['item'] = new_txion.__repr__()
+            ex_callback = new_txion
 
         self.send_to_nodes(payload)
+        return ex_callback
 
     def forge(self):
-        new_block = self._blockchain.forge()
+        # get wallet.address_pub
+        new_block = self._blockchain.forge(self.id)
         payload = {'b_type': 'block', 'item': new_block.__repr__()}
         self.send_to_nodes(data=payload)
+        return new_block
 
     # all the methods below are called when things happen in the network.
     # implement your network node behavior to create the required functionality.
@@ -63,3 +69,17 @@ class BlobNode(Node):
 
     def node_request_to_stop(self):
         print("node is requested to stop (" + self.id + "): ")
+
+
+if __name__ == '__main__':
+    n = BlobNode(SETTINGS.HOST, SETTINGS.PORT)
+    n.start()
+
+    stop = False
+    while not stop:
+        outbound = input('Press \'0\' to stop. \n')
+        if int(outbound) == 0:
+            stop = True
+
+    if stop:
+        n.stop()

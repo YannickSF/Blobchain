@@ -1,2 +1,2 @@
-# blob
-personal little blockchain
+# Blobchain
+**Experimental Blockchain**
