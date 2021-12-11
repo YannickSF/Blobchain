@@ -1,7 +1,7 @@
 
 import random
 import hashlib
-from settings import SETTINGS
+from core.settings import SETTINGS
 
 WORDS_BANK = ['Composé', 'Cactus', 'Madrid', 'Câbles', 'Câblage', 'Pause', 'Ronflement', 'Carburant', 'Décoration',
               'Chômage', 'Laitue', 'Infraction', 'Paille', 'Kiosque', 'Tortue', 'Invisible', 'Drôle', 'Quartier',

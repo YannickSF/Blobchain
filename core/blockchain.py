@@ -17,8 +17,12 @@ class Blobchain:
         self._current_circulated_coins = 0
 
         if len(self._chain.all()) < 1:
-            self._create_block(None, None)
+            self.create_block(None, None)
         self._circulation()
+
+    @property
+    def current_circulated_coins(self):
+        return self._current_circulated_coins
 
     def _circulation(self):
         blocks = self._chain.all()
@@ -28,7 +32,7 @@ class Blobchain:
                     if tx['from'] == SETTINGS.ADDRESS:
                         self._current_circulated_coins += tx['amount']
 
-    def _create_block(self, proof, miner):
+    def create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
         data = self._txion.all() if index > 0 else {'describe': 'initial axiom',
@@ -99,7 +103,7 @@ class Blobchain:
         proof = proof_of_work(self.last_block())
         if proof is not None:
             # todo : distribute rewards
-            return self._create_block(proof, miner)
+            return self.create_block(proof, miner)
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""

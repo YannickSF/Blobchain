@@ -1,2 +1,2 @@
-# blob
+# Blob
 personal little blockchain
