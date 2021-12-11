@@ -19,7 +19,7 @@ class BlobNode(Node):
     def exchanges(self, b_type, exp, to, value):
         payload = {'b_type': b_type}
         ex_callback = None
-
+  
         if b_type == 'txion':
             new_txion = self._blockchain.exchanges(exp, to, value)
             payload['item'] = new_txion.__repr__()
@@ -83,4 +83,3 @@ if __name__ == '__main__':
 
     if stop:
         n.stop()
-

@@ -115,6 +115,7 @@ class Blobchain:
         def compare_blocks(blockchain_one, blockchain_two):
             blockchain_one = blockchain_one.sort()
             blockchain_two = blockchain_two.sort()
+            
             # todo : tests with difference : if ain't work : use hash by hash method
             return blockchain_one - blockchain_two, blockchain_one \
                 if len(blockchain_one) >= len(blockchain_two) else blockchain_two
@@ -142,12 +143,13 @@ class Blobchain:
 
             if len(resolve_chain) > 0:
                 resolve = False
-
                 # todo : temporiser resolve_chain -> forge():#next_block
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
-
+                    
+                resolve = False
+                
             if longer_is_self:
                 resolve_chain = self._chain.all()
 
