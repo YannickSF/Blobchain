@@ -13,8 +13,9 @@ class Blobchain:
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
-        self._max_coin = SETTINGS.COINS
+        self._max_coin = SETTINGS.COIN
         self._current_circulated_coins = 0
+        self._txion_count = 0
 
         if len(self._chain.all()) < 1:
             self.create_block(None, None)
@@ -29,19 +30,22 @@ class Blobchain:
         for b in blocks:
             if type(b['data']) == list:
                 for tx in b['data']:
-                    if tx['expeditor'] == SETTINGS.ADDRESS:
+                    self._txion_count += 1
+                    if tx['expeditor'] == SETTINGS.SIGNATURE:
                         self._current_circulated_coins += tx['amount']
 
     def create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
-        data = self._txion.all() if index > 0 else {'describe': 'initial axiom',
-                                                    'coins': SETTINGS.COINS,
-                                                    'MARKUP': SETTINGS.MARKUP,
-                                                    'network_address': SETTINGS.ADDRESS}
+        data = self._txion.all() if index > 0 else {'describe': '# genesis blob of the chain',
+                                                    'NAME': SETTINGS.NAME,
+                                                    'SIGNATURE': SETTINGS.SIGNATURE,
+                                                    'NETWORK': SETTINGS.NETWORK,
+                                                    'COIN_NAME': SETTINGS.COIN_NAME,
+                                                    'COIN': SETTINGS.COIN}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
-        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
-        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.ADDRESS
+        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[GENESIS_BLOB_0111]'
+        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.SIGNATURE
 
         # todo : check data size before creating block
         b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
@@ -61,9 +65,10 @@ class Blobchain:
 
     def _reward(self, address):
         """ calculate and distribute rewards after forging block """
-        guess_rewards = random.randint(1, 10)
-        self.exchanges(SETTINGS.ADDRESS, address, guess_rewards)
+        guess_rewards = random.randint(SETTINGS.REWARD_MIN, SETTINGS.REWARD_MAX)
+        rewarded_tx = self.exchanges(SETTINGS.SIGNATURE, address, guess_rewards)
         self._current_circulated_coins += guess_rewards
+        return rewarded_tx
 
     def forge(self, miner):
         """ creating new block by forging()"""
@@ -102,8 +107,9 @@ class Blobchain:
 
         proof = proof_of_work(self.last_block())
         if proof is not None:
-            # todo : distribute rewards
-            return self.create_block(proof, miner)
+            yield self.create_block(proof, miner)
+            yield self._reward(miner)
+            yield proof
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with network"""
@@ -116,7 +122,7 @@ class Blobchain:
             blockchain_one = blockchain_one.sort()
             blockchain_two = blockchain_two.sort()
             
-            # todo : tests with difference : if ain't work : use hash by hash method
+            # tests with difference : if ain't work : use hash by hash method
             return blockchain_one - blockchain_two, blockchain_one \
                 if len(blockchain_one) >= len(blockchain_two) else blockchain_two
 
@@ -143,7 +149,7 @@ class Blobchain:
 
             if len(resolve_chain) > 0:
                 resolve = False
-                # todo : temporiser resolve_chain -> forge():#next_block
+                # todo : temporiser resolve_chain -> forge():#next_block - 1
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
@@ -157,7 +163,7 @@ class Blobchain:
             resolve = True
             resolve_chain = blockchain
 
-            # todo : temporiser resolve_chain -> forge():#next_block
+            # todo : temporiser resolve_chain -> forge():#next_block - 2
             self._chain.truncate()
             for it in resolve_chain:
                 self._chain.insert(it)
@@ -165,7 +171,7 @@ class Blobchain:
         self._circulation()
         return resolve, resolve_chain
 
-    def exchanges(self, *args, **kwargs):
+    def exchanges(self, *args):
         """create exchange from the node"""
         expeditor = args[0] if args[0] is not None else None
         to = args[1] if args[1] is not None else None
@@ -175,8 +181,17 @@ class Blobchain:
             return 'Error execute exchange.'
 
         timestamp = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
-        nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 else 'empty.nounce'
-        tx = Txion(expeditor=expeditor, destinator=to, amount=obj, timestamp=timestamp, nounce=nounce)
+        nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 \
+            else '#0'
+        self._txion_count += 1
+        tx = Txion(
+            expeditor=expeditor,
+            destinator=to,
+            amount=obj,
+            timestamp=timestamp,
+            nounce=nounce,
+            index=self._txion_count
+        )
         self._txion.insert(tx.__repr__())
         return tx
 

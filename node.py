@@ -1,7 +1,7 @@
 
 from core.settings import SETTINGS
 from p2pnetwork.node import Node
-from core.blockchain import Blobchain
+from core.blockchain import Blobchain, Block, Txion
 
 
 class BlobNode(Node):
@@ -29,12 +29,18 @@ class BlobNode(Node):
         return ex_callback
 
     def forge(self):
-        # get wallet.address_pub
-        new_block = self._blockchain.forge(self.id)
-        payload = {'b_type': 'block', 'item': new_block.__repr__()}
-        self.send_to_nodes(data=payload)
-        return new_block
+        # todo : connect wallets
+        for action in self._blockchain.forge(self.id):
+            if type(action) is Block:
+                payload = {'b_type': 'block', 'item': action.__repr__()}
+                self.send_to_nodes(data=payload)
 
+            elif type(action) is Txion:
+                payload = {'b_type': 'txion', 'item': action.__repr__()}
+                self.send_to_nodes(data=payload)
+
+            elif type(action) is int:
+                return action
     # all the methods below are called when things happen in the network.
     # implement your network node behavior to create the required functionality.
 

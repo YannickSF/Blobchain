@@ -84,13 +84,14 @@ def client():
 
     stop = False
     while not stop:
+        print('\n')
         print('-------------------- BLOB_CHAIN CLIENT --------------------')
         print('1. Find_block')
         print('2. Connect to node')
         print('3. Exchange')
         print('4. Forge')
-        print('5. Wallet >>')
-        print('0. exit -> stop Node')
+        print('5. >|Wallet')
+        print('0. >|Exit Node')
         option = input('Choose option : \n')
 
         if int(option) == 0:

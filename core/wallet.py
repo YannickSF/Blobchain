@@ -24,7 +24,7 @@ class Wallet:
         cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
         cuter_private.update(bytes('{}'.format(self._secret_phrase).encode()))
         cuter_private.update(bytes('{}'.format(password).encode()))
-        cuter_private.update(bytes('{}'.format(SETTINGS.ADDRESS).encode()))
+        cuter_private.update(bytes('{}'.format(SETTINGS.SIGNATURE).encode()))
         self._private_key = cuter_private.hexdigest()
 
         cuter_public = hashlib.sha256()
@@ -37,7 +37,7 @@ class Wallet:
         cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
         cuter_private.update(bytes('{}'.format(secret_phrase).encode()))
         cuter_private.update(bytes('{}'.format(password).encode()))
-        cuter_private.update(bytes('{}'.format(SETTINGS.ADDRESS).encode()))
+        cuter_private.update(bytes('{}'.format(SETTINGS.SIGNATURE).encode()))
 
         guessing_private = cuter_private.hexdigest()
         if private_key == guessing_private:
@@ -61,7 +61,10 @@ class Wallet:
 
 
 if __name__ == '__main__':
+    print('------- CREATE BLOB_CHAIN WALLET -------')
     w = Wallet()
     w.create(input('Enter password : \n'))
+    print('------- DONE -------')
     print((w.__str__()))
+    print('------- /GOLDEN_BLOB\\ -------')
 

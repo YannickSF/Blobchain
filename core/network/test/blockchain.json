@@ -1,3 +1,20 @@
 {
-    "_default": {}
+    "_default": {
+        "1": {
+            "data": {
+                "COIN": 1000000000,
+                "COIN_NAME": "-GOLDEN_BLOB-",
+                "NAME": "-BLOB_CHAIN-",
+                "NETWORK": "test",
+                "SIGNATURE": "origin-319838453e0be92c89f3cf3c26849418bae38a36d6f46942e908b49216affaf6",
+                "describe": "# genesis blob of the chain"
+            },
+            "forge_by": "origin-319838453e0be92c89f3cf3c26849418bae38a36d6f46942e908b49216affaf6",
+            "hash": "4a79cac13db809447a9bbe942cb84df9362fd521872755e1f86d0589bf9ae6ca",
+            "index": 0,
+            "last_hash": "[GENESIS_BLOB_0111]",
+            "proof": null,
+            "timestamp": " 29/12/2021_16:25:08"
+        }
+    }
 }
