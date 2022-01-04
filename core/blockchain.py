@@ -34,6 +34,27 @@ class Blobchain:
                     if tx['expeditor'] == SETTINGS.SIGNATURE:
                         self._current_circulated_coins += tx['amount']
 
+    def balance(self, address):
+        """ return balance of transactions of a given address """
+        tmp_txions = []
+        tmp_balance = 0
+        # Blocks : valid
+        blocks = self._chain.all()
+        for b in blocks:
+            if type(b['data']) == list:
+                for tx in b['data']:
+                    if tx['destinator'] == address:
+                        tmp_balance += tx['amount']
+                        tmp_txions.append(tx)
+        # Transactions : opened
+        txions = self._txion.all()
+        for t in txions:
+            if t['destinator'] == address:
+                tmp_balance += t['amount']
+                tmp_txions.append(t)
+
+        return tmp_balance, tmp_txions
+
     def create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
@@ -112,7 +133,7 @@ class Blobchain:
             yield proof
 
     def synchronise(self, *args, **blockchain):
-        """synchronise node with network"""
+        """synchronise node with test_network"""
         print('compute - synchronisation : ' + str(blockchain))
         resolve = False
         resolve_chain = []
@@ -196,7 +217,7 @@ class Blobchain:
         return tx
 
     def peers_exchanges(self, b_type, item):
-        """receiving peers exchanges from network"""
+        """receiving peers exchanges from test_network"""
         print('compute - peers_exchanges : ' + str(b_type))
         if b_type == 'block':
             b = Block(**item)

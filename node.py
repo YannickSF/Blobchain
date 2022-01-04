@@ -10,6 +10,11 @@ class BlobNode(Node):
         self._blockchain = Blobchain()
         print("Node {} - port {}: Started".format(self.id, port))
 
+    def balance(self, wallet_address):
+        """ return amount of coin on a given address """
+        balance, balance_txions = self._blockchain.balance(wallet_address)
+        return balance
+
     def blocks(self, *args):
         if len(args) > 0:
             return self._blockchain.block(args[0])
@@ -29,7 +34,7 @@ class BlobNode(Node):
         return ex_callback
 
     def forge(self):
-        # todo : connect wallets
+        # todo : need to connect to wallet
         for action in self._blockchain.forge(self.id):
             if type(action) is Block:
                 payload = {'b_type': 'block', 'item': action.__repr__()}
@@ -41,8 +46,8 @@ class BlobNode(Node):
 
             elif type(action) is int:
                 return action
-    # all the methods below are called when things happen in the network.
-    # implement your network node behavior to create the required functionality.
+    # all the methods below are called when things happen in the test_network.
+    # implement your test_network node behavior to create the required functionality.
 
     def outbound_node_connected(self, node):
         # this connect to other

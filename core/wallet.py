@@ -21,7 +21,7 @@ class Wallet:
     def create(self, password):
         cuter_private = hashlib.sha256()
         self._secret_phrase = get_secret_phrases()
-        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
+        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.NAME).encode()))
         cuter_private.update(bytes('{}'.format(self._secret_phrase).encode()))
         cuter_private.update(bytes('{}'.format(password).encode()))
         cuter_private.update(bytes('{}'.format(SETTINGS.SIGNATURE).encode()))
@@ -34,7 +34,7 @@ class Wallet:
 
     def open(self, private_key, password, secret_phrase):
         cuter_private = hashlib.sha256()
-        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.MARKUP).encode()))
+        cuter_private.update(bytes('{}-WALLET_USAGE'.format(SETTINGS.NAME).encode()))
         cuter_private.update(bytes('{}'.format(secret_phrase).encode()))
         cuter_private.update(bytes('{}'.format(password).encode()))
         cuter_private.update(bytes('{}'.format(SETTINGS.SIGNATURE).encode()))

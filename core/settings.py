@@ -1,5 +1,4 @@
 
-
 class _TestNetSettings:
     # BLOCKCHAIN
     NAME = '-BLOB_CHAIN-'
