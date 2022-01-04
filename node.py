@@ -33,9 +33,8 @@ class BlobNode(Node):
         self.send_to_nodes(payload)
         return ex_callback
 
-    def forge(self):
-        # todo : need to connect to wallet
-        for action in self._blockchain.forge(self.id):
+    def forge(self, address):
+        for action in self._blockchain.forge(address):
             if type(action) is Block:
                 payload = {'b_type': 'block', 'item': action.__repr__()}
                 self.send_to_nodes(data=payload)
@@ -80,6 +79,7 @@ class BlobNode(Node):
 
     def node_request_to_stop(self):
         print("node is requested to stop (" + self.id + "): ")
+        # todo : close blockchain files
 
 
 if __name__ == '__main__':
