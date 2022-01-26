@@ -12,8 +12,7 @@ class BlobNode(Node):
 
     def balance(self, wallet_address):
         """ return amount of coin on a given address """
-        balance, balance_txions = self._blockchain.balance(wallet_address)
-        return balance
+        return self._blockchain.balance(wallet_address)
 
     def blocks(self, *args):
         if len(args) > 0:
@@ -24,7 +23,7 @@ class BlobNode(Node):
     def exchanges(self, b_type, exp, to, value):
         payload = {'b_type': b_type}
         ex_callback = None
-  
+
         if b_type == 'txion':
             new_txion = self._blockchain.exchanges(exp, to, value)
             payload['item'] = new_txion.__repr__()
@@ -55,7 +54,7 @@ class BlobNode(Node):
     def inbound_node_connected(self, node):
         # other connect to this
         payload = self.blocks()
-        payload['synchronisation'] = True
+        payload['synchronisation'] = 'synchronisation'
         self.send_to_node(node, payload)
         print("inbound_node_connected: (" + self.id + "): " + node.id)
 
@@ -68,18 +67,19 @@ class BlobNode(Node):
     def node_message(self, node, data):
         print("node_message (" + self.id + ") from " + node.id + ": " + str(data))
         if 'synchronisation' in data.keys():
-            synchronisation_state, synchronisation_chain = self._blockchain.synchronise(data['synchronisation'],
-                                                                                        blockchain=data['blockchain'])
-            if not synchronisation_state:
-                self.send_to_node(node, {'synchronisation_resolve': True, 'resolve_chain': synchronisation_chain})
+            resolve, synchron_chain = self._blockchain.synchronise(data['synchronisation'],
+                                                                   blockchain=data['blockchain'])
+            if resolve:
+                self.send_to_node(node, {'synchronisation': 'resolve', 'blockchain': synchron_chain})
+
         elif 'b_type' in data.keys():
             self._blockchain.peers_exchanges(data['b_type'], data['item'])
+
         else:
             self._blockchain.peers_exchanges(None, data)
 
     def node_request_to_stop(self):
         print("node is requested to stop (" + self.id + "): ")
-        # todo : close blockchain files
 
 
 if __name__ == '__main__':

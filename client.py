@@ -65,7 +65,6 @@ class Client:
             secret_phrase = input('Enter secret_phrase : \n')
             self.connected_wallet.open(private_key, password, secret_phrase)
             print(self.connected_wallet.__repr__())
-            # todo :  print if connected
             print('-------------------- Exit Wallet : 0 --------------------')
 
         def balance():

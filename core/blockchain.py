@@ -6,9 +6,10 @@ from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
 from core.settings import SETTINGS
+from core.libs import SingletonMeta
 
 
-class Blobchain:
+class Blobchain(metaclass=SingletonMeta):
     def __init__(self):
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
@@ -68,7 +69,6 @@ class Blobchain:
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[GENESIS_BLOB_0111]'
         forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.SIGNATURE
 
-        # todo : check data size before creating block
         b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
 
         self._chain.insert(b.__repr__())
@@ -134,60 +134,70 @@ class Blobchain:
 
     def synchronise(self, *args, **blockchain):
         """synchronise node with test_network"""
-        print('compute - synchronisation : ' + str(blockchain))
+        print('{0} - '.format(args[0]) + str(blockchain))
+
         resolve = False
+        longer_is_self = False
+        self_chain = self._chain.all()
         resolve_chain = []
-        longer_is_self = True
 
-        def compare_blocks(blockchain_one, blockchain_two):
-            blockchain_one = blockchain_one.sort()
-            blockchain_two = blockchain_two.sort()
-            
-            # tests with difference : if ain't work : use hash by hash method
-            return blockchain_one - blockchain_two, blockchain_one \
-                if len(blockchain_one) >= len(blockchain_two) else blockchain_two
+        if args[0] == 'synchronisation':
 
-        def find_block(key, value, chain):
-            for e in chain:
-                if e[key] == value:
-                    return True
-            return False
+            def check_blocks_by_hash(longer_chain, other_chain):
+                refined_chain = []
 
-        if args[0] == 'compute':
-            block_difference, longer_chain = compare_blocks(self._chain.all(), blockchain['data'])
-            if longer_chain == self._chain.all():
+                for i in range(len(longer_chain)):
+                    b0 = longer_chain[i]
+                    b1 = other_chain[i]
+
+                    if b0['last_hash'] == b1['last_hash'] and b0['hash'] == b1['hash']:
+                        refined_chain.append(b0)
+                    elif b0['last_hash'] == b1['last_hash'] and b0['hash'] != b1['hash']:
+                        refined_chain.append(b0)
+                        refined_chain.append(b1)
+                    elif b0['last_hash'] != b1['last_hash'] and b0['hash'] == b1['hash']:
+                        refined_chain.append(b0)
+                    elif b0['last_hash'] != b1['last_hash'] and b0['hash'] != b1['hash']:
+                        refined_chain.append(b0)
+                        refined_chain.append(b1)
+
+                return refined_chain
+
+            self_chain = self_chain.sort()
+            network_chain = blockchain['data'].sort()
+
+            if len(self_chain) >= len(blockchain):
                 longer_is_self = True
 
-            if len(block_difference) > 0:
-                # check if block_difference in longer_chain : if not -> create resolve chain
-                for block in block_difference:
-                    if not find_block('hash', block['hash'], longer_chain):
-                        resolve_chain.append(block)
+            resolve_chain = check_blocks_by_hash(self_chain, network_chain) if longer_is_self else check_blocks_by_hash(
+                network_chain, self_chain)
 
-                if len(resolve_chain) > 0:
-                    resolve_chain += longer_chain
-                    resolve_chain.sort(key=lambda x: x['timestamp'])
+            if len(resolve_chain) > len(self_chain if longer_is_self else network_chain):
+                resolve = True
 
-            if len(resolve_chain) > 0:
-                resolve = False
-                # todo : temporiser resolve_chain -> forge():#next_block - 1
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
-                    
-                resolve = False
-                
-            if longer_is_self:
-                resolve_chain = self._chain.all()
+            else:
+                if not longer_is_self:
+                    resolve = True
+
+                    self._chain.truncate()
+                    for it in resolve_chain:
+                        self._chain.insert(it)
+
+            if resolve:
+                self.forge(SETTINGS.SIGNATURE)
 
         elif args[0] == 'resolve':
-            resolve = True
-            resolve_chain = blockchain
+            resolve = False
 
-            # todo : temporiser resolve_chain -> forge():#next_block - 2
             self._chain.truncate()
             for it in resolve_chain:
                 self._chain.insert(it)
+
+        else:
+            print('Error !')
 
         self._circulation()
         return resolve, resolve_chain
@@ -231,6 +241,10 @@ class Blobchain:
             print(item)
         else:
             print('unknown item.')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._chain.close()
+        self._txion.close()
 
     def __repr__(self):
         return {'blockchain': self._chain.all()}
