@@ -44,7 +44,6 @@ class Client:
         print(self.client_node.forge(self.connected_wallet.public_key))
 
     def wallet(self):
-
         def create_wallet():
             print('-------------------- WALLET --------------------')
             print('-------------------- CREATE --------------------')

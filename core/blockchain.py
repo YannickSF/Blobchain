@@ -17,7 +17,6 @@ class Blobchain(metaclass=SingletonMeta):
         self._max_coin = SETTINGS.COIN
         self._current_circulated_coins = 0
         self._txion_count = 0
-
         if len(self._chain.all()) < 1:
             self.create_block(None, None)
         self._circulation()
@@ -68,7 +67,6 @@ class Blobchain(metaclass=SingletonMeta):
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
         last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[GENESIS_BLOB_0111]'
         forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.SIGNATURE
-
         b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
 
         self._chain.insert(b.__repr__())
@@ -131,7 +129,7 @@ class Blobchain(metaclass=SingletonMeta):
             yield self.create_block(proof, miner)
             yield self._reward(miner)
             yield proof
-
+      
     def synchronise(self, *args, **blockchain):
         """synchronise node with test_network"""
         print('{0} - '.format(args[0]) + str(blockchain))
@@ -174,7 +172,6 @@ class Blobchain(metaclass=SingletonMeta):
 
             if len(resolve_chain) > len(self_chain if longer_is_self else network_chain):
                 resolve = True
-
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
@@ -198,7 +195,7 @@ class Blobchain(metaclass=SingletonMeta):
 
         else:
             print('Error !')
-
+      
         self._circulation()
         return resolve, resolve_chain
 

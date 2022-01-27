@@ -24,7 +24,6 @@ class _MainNetSettings:
     COIN = 1000000000
     REWARD_MIN = 1
     REWARD_MAX = 10
-
     # NETWORK
     HOST = '0.0.0.0'
     PORT = 7701
