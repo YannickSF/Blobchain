@@ -10,9 +10,6 @@ class BlockchainTest(unittest.TestCase):
 
         self.assertNotEqual(0, t_blobchain.current_circulated_coins)
 
-    def test_balance(self):
-        pass
-
     def test_create_block(self):
         t_blobchain = Blobchain()
         t_proof = 23
@@ -49,9 +46,6 @@ class BlockchainTest(unittest.TestCase):
         self.assertEqual(type(res[1]), Txion)
         self.assertEqual(type(res[2]), int)
 
-    def test_synchronise(self):
-        pass
-
     def test_exchanges(self):
         t_blobchain = Blobchain()
         expeditor = 'exp1'
@@ -64,7 +58,4 @@ class BlockchainTest(unittest.TestCase):
         self.assertEqual(expeditor, t_res_txion.expeditor)
         self.assertEqual(destinator, t_res_txion.destinator)
         self.assertEqual(amount, t_res_txion.amount)
-
-    def test_peers_exchanges(self):
-        pass
 
