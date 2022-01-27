@@ -1,7 +1,7 @@
 
 from core.settings import SETTINGS
 from p2pnetwork.node import Node
-from core.blockchain import Blobchain
+from core.blockchain import Blobchain, Block, Txion
 
 
 class BlobNode(Node):
@@ -9,6 +9,10 @@ class BlobNode(Node):
         super(BlobNode, self).__init__(host, port, None, callback, max_connections)
         self._blockchain = Blobchain()
         print("Node {} - port {}: Started".format(self.id, port))
+
+    def balance(self, wallet_address):
+        """ return amount of coin on a given address """
+        return self._blockchain.balance(wallet_address)
 
     def blocks(self, *args):
         if len(args) > 0:
@@ -19,7 +23,7 @@ class BlobNode(Node):
     def exchanges(self, b_type, exp, to, value):
         payload = {'b_type': b_type}
         ex_callback = None
-  
+
         if b_type == 'txion':
             new_txion = self._blockchain.exchanges(exp, to, value)
             payload['item'] = new_txion.__repr__()
@@ -28,15 +32,20 @@ class BlobNode(Node):
         self.send_to_nodes(payload)
         return ex_callback
 
-    def forge(self):
-        # get wallet.address_pub
-        new_block = self._blockchain.forge(self.id)
-        payload = {'b_type': 'block', 'item': new_block.__repr__()}
-        self.send_to_nodes(data=payload)
-        return new_block
+    def forge(self, address):
+        for action in self._blockchain.forge(address):
+            if type(action) is Block:
+                payload = {'b_type': 'block', 'item': action.__repr__()}
+                self.send_to_nodes(data=payload)
 
-    # all the methods below are called when things happen in the network.
-    # implement your network node behavior to create the required functionality.
+            elif type(action) is Txion:
+                payload = {'b_type': 'txion', 'item': action.__repr__()}
+                self.send_to_nodes(data=payload)
+
+            elif type(action) is int:
+                return action
+    # all the methods below are called when things happen in the test_network.
+    # implement your test_network node behavior to create the required functionality.
 
     def outbound_node_connected(self, node):
         # this connect to other
@@ -45,7 +54,7 @@ class BlobNode(Node):
     def inbound_node_connected(self, node):
         # other connect to this
         payload = self.blocks()
-        payload['synchronisation'] = True
+        payload['synchronisation'] = 'synchronisation'
         self.send_to_node(node, payload)
         print("inbound_node_connected: (" + self.id + "): " + node.id)
 
@@ -58,12 +67,14 @@ class BlobNode(Node):
     def node_message(self, node, data):
         print("node_message (" + self.id + ") from " + node.id + ": " + str(data))
         if 'synchronisation' in data.keys():
-            synchronisation_state, synchronisation_chain = self._blockchain.synchronise(data['synchronisation'],
-                                                                                        blockchain=data['blockchain'])
-            if not synchronisation_state:
-                self.send_to_node(node, {'synchronisation_resolve': True, 'resolve_chain': synchronisation_chain})
+            resolve, synchron_chain = self._blockchain.synchronise(data['synchronisation'],
+                                                                   blockchain=data['blockchain'])
+            if resolve:
+                self.send_to_node(node, {'synchronisation': 'resolve', 'blockchain': synchron_chain})
+
         elif 'b_type' in data.keys():
             self._blockchain.peers_exchanges(data['b_type'], data['item'])
+
         else:
             self._blockchain.peers_exchanges(None, data)
 

@@ -6,16 +6,17 @@ from core.nosql import Table, Query
 from core.blocks import Block
 from core.transactions import Txion
 from core.settings import SETTINGS
+from core.libs import SingletonMeta
 
 
-class Blobchain:
+class Blobchain(metaclass=SingletonMeta):
     def __init__(self):
         self._chain = Table('blockchain')
         self._txion = Table('exchanges')
 
-        self._max_coin = SETTINGS.COINS
+        self._max_coin = SETTINGS.COIN
         self._current_circulated_coins = 0
-
+        self._txion_count = 0
         if len(self._chain.all()) < 1:
             self.create_block(None, None)
         self._circulation()
@@ -29,21 +30,43 @@ class Blobchain:
         for b in blocks:
             if type(b['data']) == list:
                 for tx in b['data']:
-                    if tx['from'] == SETTINGS.ADDRESS:
+                    self._txion_count += 1
+                    if tx['expeditor'] == SETTINGS.SIGNATURE:
                         self._current_circulated_coins += tx['amount']
+
+    def balance(self, address):
+        """ return balance of transactions of a given address """
+        tmp_txions = []
+        tmp_balance = 0
+        # Blocks : valid
+        blocks = self._chain.all()
+        for b in blocks:
+            if type(b['data']) == list:
+                for tx in b['data']:
+                    if tx['destinator'] == address:
+                        tmp_balance += tx['amount']
+                        tmp_txions.append(tx)
+        # Transactions : opened
+        txions = self._txion.all()
+        for t in txions:
+            if t['destinator'] == address:
+                tmp_balance += t['amount']
+                tmp_txions.append(t)
+
+        return tmp_balance, tmp_txions
 
     def create_block(self, proof, miner):
         """create a new block"""
         index = len(self._chain.all())
-        data = self._txion.all() if index > 0 else {'describe': 'initial axiom',
-                                                    'coins': SETTINGS.COINS,
-                                                    'MARKUP': SETTINGS.MARKUP,
-                                                    'network_address': SETTINGS.ADDRESS}
+        data = self._txion.all() if index > 0 else {'describe': '# genesis blob of the chain',
+                                                    'NAME': SETTINGS.NAME,
+                                                    'SIGNATURE': SETTINGS.SIGNATURE,
+                                                    'NETWORK': SETTINGS.NETWORK,
+                                                    'COIN_NAME': SETTINGS.COIN_NAME,
+                                                    'COIN': SETTINGS.COIN}
         timestamp = datetime.datetime.now().strftime(" %d/%m/%Y_%H:%M:%S")
-        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[Genesis-Block-0111]'
-        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.ADDRESS
-
-        # todo : check data size before creating block
+        last_hash = self._chain.all()[index - 1]['hash'] if len(self._chain.all()) > 0 else '[GENESIS_BLOB_0111]'
+        forge_by = miner if len(self._chain.all()) > 0 else SETTINGS.SIGNATURE
         b = Block(index=index, data=data, proof=proof, timestamp=timestamp, last_hash=last_hash, forge_by=forge_by)
 
         self._chain.insert(b.__repr__())
@@ -61,9 +84,10 @@ class Blobchain:
 
     def _reward(self, address):
         """ calculate and distribute rewards after forging block """
-        guess_rewards = random.randint(1, 10)
-        self.exchanges(SETTINGS.ADDRESS, address, guess_rewards)
+        guess_rewards = random.randint(SETTINGS.REWARD_MIN, SETTINGS.REWARD_MAX)
+        rewarded_tx = self.exchanges(SETTINGS.SIGNATURE, address, guess_rewards)
         self._current_circulated_coins += guess_rewards
+        return rewarded_tx
 
     def forge(self, miner):
         """ creating new block by forging()"""
@@ -102,70 +126,80 @@ class Blobchain:
 
         proof = proof_of_work(self.last_block())
         if proof is not None:
-            # todo : distribute rewards
-            return self.create_block(proof, miner)
-
+            yield self.create_block(proof, miner)
+            yield self._reward(miner)
+            yield proof
+      
     def synchronise(self, *args, **blockchain):
-        """synchronise node with network"""
-        print('compute - synchronisation : ' + str(blockchain))
+        """synchronise node with test_network"""
+        print('{0} - '.format(args[0]) + str(blockchain))
+
         resolve = False
+        longer_is_self = False
+        self_chain = self._chain.all()
         resolve_chain = []
-        longer_is_self = True
 
-        def compare_blocks(blockchain_one, blockchain_two):
-            blockchain_one = blockchain_one.sort()
-            blockchain_two = blockchain_two.sort()
-            
-            # todo : tests with difference : if ain't work : use hash by hash method
-            return blockchain_one - blockchain_two, blockchain_one \
-                if len(blockchain_one) >= len(blockchain_two) else blockchain_two
+        if args[0] == 'synchronisation':
 
-        def find_block(key, value, chain):
-            for e in chain:
-                if e[key] == value:
-                    return True
-            return False
+            def check_blocks_by_hash(longer_chain, other_chain):
+                refined_chain = []
 
-        if args[0] == 'compute':
-            block_difference, longer_chain = compare_blocks(self._chain.all(), blockchain['data'])
-            if longer_chain == self._chain.all():
+                for i in range(len(longer_chain)):
+                    b0 = longer_chain[i]
+                    b1 = other_chain[i]
+
+                    if b0['last_hash'] == b1['last_hash'] and b0['hash'] == b1['hash']:
+                        refined_chain.append(b0)
+                    elif b0['last_hash'] == b1['last_hash'] and b0['hash'] != b1['hash']:
+                        refined_chain.append(b0)
+                        refined_chain.append(b1)
+                    elif b0['last_hash'] != b1['last_hash'] and b0['hash'] == b1['hash']:
+                        refined_chain.append(b0)
+                    elif b0['last_hash'] != b1['last_hash'] and b0['hash'] != b1['hash']:
+                        refined_chain.append(b0)
+                        refined_chain.append(b1)
+
+                return refined_chain
+
+            self_chain = self_chain.sort()
+            network_chain = blockchain['data'].sort()
+
+            if len(self_chain) >= len(blockchain):
                 longer_is_self = True
 
-            if len(block_difference) > 0:
-                # check if block_difference in longer_chain : if not -> create resolve chain
-                for block in block_difference:
-                    if not find_block('hash', block['hash'], longer_chain):
-                        resolve_chain.append(block)
+            resolve_chain = check_blocks_by_hash(self_chain, network_chain) if longer_is_self else check_blocks_by_hash(
+                network_chain, self_chain)
 
-                if len(resolve_chain) > 0:
-                    resolve_chain += longer_chain
-                    resolve_chain.sort(key=lambda x: x['timestamp'])
-
-            if len(resolve_chain) > 0:
-                resolve = False
-                # todo : temporiser resolve_chain -> forge():#next_block
+            if len(resolve_chain) > len(self_chain if longer_is_self else network_chain):
+                resolve = True
                 self._chain.truncate()
                 for it in resolve_chain:
                     self._chain.insert(it)
-                    
-                resolve = False
-                
-            if longer_is_self:
-                resolve_chain = self._chain.all()
+            else:
+                if not longer_is_self:
+                    resolve = True
+
+                    self._chain.truncate()
+                    for it in resolve_chain:
+                        self._chain.insert(it)
+
+            if resolve:
+                self.forge(SETTINGS.SIGNATURE)
 
         elif args[0] == 'resolve':
-            resolve = True
-            resolve_chain = blockchain
+            resolve = False
 
-            # todo : temporiser resolve_chain -> forge():#next_block
             self._chain.truncate()
             for it in resolve_chain:
                 self._chain.insert(it)
 
+        else:
+            print('Error !')
+      
         self._circulation()
         return resolve, resolve_chain
 
-    def exchanges(self, *args, **kwargs):
+    def exchanges(self, *args):
         """create exchange from the node"""
         expeditor = args[0] if args[0] is not None else None
         to = args[1] if args[1] is not None else None
@@ -175,13 +209,22 @@ class Blobchain:
             return 'Error execute exchange.'
 
         timestamp = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
-        nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 else 'empty.nounce'
-        tx = Txion(expeditor=expeditor, destinator=to, amount=obj, timestamp=timestamp, nounce=nounce)
+        nounce = self._txion.all()[len(self._txion.all()) - 1]['hash'] if len(self._txion.all()) > 0 \
+            else '#0'
+        self._txion_count += 1
+        tx = Txion(
+            expeditor=expeditor,
+            destinator=to,
+            amount=obj,
+            timestamp=timestamp,
+            nounce=nounce,
+            index=self._txion_count
+        )
         self._txion.insert(tx.__repr__())
         return tx
 
     def peers_exchanges(self, b_type, item):
-        """receiving peers exchanges from network"""
+        """receiving peers exchanges from test_network"""
         print('compute - peers_exchanges : ' + str(b_type))
         if b_type == 'block':
             b = Block(**item)
@@ -195,6 +238,10 @@ class Blobchain:
             print(item)
         else:
             print('unknown item.')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._chain.close()
+        self._txion.close()
 
     def __repr__(self):
         return {'blockchain': self._chain.all()}

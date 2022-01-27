@@ -35,14 +35,14 @@ class Table(TinyDB):
         super().__init__(*args, **kwargs)
 
     def get_table_name(self):
-        """Return the network filename"""
+        """Return the test_network filename"""
 
         return self._name
 
     @staticmethod
     def get_fields(datas, fields_name: list):
         """ Returns the list of the elements of a field
-            @network : data List
+            @test_network : data List
             @fields_name : list<str> : names of the columns to get"""
 
         if len(fields_name) < 2:

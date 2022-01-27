@@ -9,6 +9,7 @@ class Txion:
         self.amount = kwargs['amount']
         self.timestamp = kwargs['timestamp']
         self.nounce = kwargs['nounce']
+        self.index = kwargs['index']
 
         if 'hash' in kwargs.keys():
             self.hash = kwargs['hash']
@@ -18,11 +19,13 @@ class Txion:
     def _encode(self):
         sha = hashlib.sha256()
         payload = {
-                   'expeditor': self.expeditor,
-                   'destinator': self.destinator,
-                   'amount': self.amount,
-                   'timestamp': self.timestamp,
-                   'nounce': self.nounce}
+            'expeditor': self.expeditor,
+            'destinator': self.destinator,
+            'amount': self.amount,
+            'timestamp': self.timestamp,
+            'nounce': self.nounce,
+            'index': self.index
+        }
 
         sha.update(str(payload).encode('utf-8'))
         self.hash = sha.hexdigest()
@@ -33,7 +36,8 @@ class Txion:
                 'amount': self.amount,
                 'timestamp': self.timestamp,
                 'nounce': self.nounce,
-                'hash': self.hash}
+                'hash': self.hash,
+                'index': self.index}
 
     def __str__(self):
         return self.__repr__().__str__()
